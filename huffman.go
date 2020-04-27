@@ -43,12 +43,11 @@ func combineTrees(t1 tree, t2 tree) tree {
 }
 
 func makeTree(forest []tree) tree {
-	var lowestWeight1, lowestWeight2, lw1I, lw2I, treeCount int = forest[0].weight, forest[1].weight, 0, 1, len(forest)
+	var lowestWeight1, lw1I, lw2I, treeCount int = forest[0].weight, 0, 1, len(forest)
 	var t3 tree
 	for treeCount > 1 {
 		for i, t := range forest {
 			if t.weight != 0 && t.weight < lowestWeight1 {
-				lowestWeight2 = lowestWeight1
 				lw2I = lw1I
 				lowestWeight1 = t.weight
 				lw1I = i
@@ -57,15 +56,23 @@ func makeTree(forest []tree) tree {
 		t3 = combineTrees(forest[lw1I], forest[lw2I])
 		forest[lw1I] = t3
 		leftSlice := forest[:lw2I]
-		rightSlice := forest[lw2I+1:]
-		forest = append(leftSlice, rightSlice)
+		if lw2I+1 < len(forest) {
+			rightSlice := forest[lw2I+1:]
+			for i := 0; i < len(rightSlice); i++ {
+				leftSlice = append(leftSlice, rightSlice[i])
+			}
+		}
 		treeCount = len(forest)
 	}
 	return t3
 }
 
+func makeTable(t tree) map[rune]byte {
+
+}
+
 func main() {
-	content := "go go gophers"
+	content := "bookkeeping"
 	charCount := countChars(content)
 	fmt.Println(charCount)
 	forest := makeForest(charCount)

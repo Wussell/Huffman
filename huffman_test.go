@@ -51,7 +51,7 @@ func TestCharCount(t *testing.T) {
 	}
 }
 
-func TestmakeForest(t *testing.T) {
+func TestMakeForest(t *testing.T) {
 	examples := []struct {
 		name   string
 		counts map[rune]int
@@ -100,23 +100,32 @@ func TestmakeForest(t *testing.T) {
 					log.Fatalf("character '%c' missing from created forest. value: %v", ex.want[i].char, ex.want[i].char)
 				}
 			}
+		})
+	}
+}
 
-			/*
-				for i := 0; i < len(forest); i++ {
-					count, ok := gotMap[forest[i].char]
-					if ok != false {
-						if count != forest[i].weight {
-							log.Fatalf("got %v, want %v", )
-						}
-					}
-					for c, count := range gotMap {
+func TestMakeTree(t *testing.T) {
+	examples := []struct {
+		name   string
+		forest []tree
+	}{
+		{
+			name: "go go gophers",
+			forest: []tree{
+				{32, 2, nil, nil},
+				{101, 1, nil, nil},
+				{103, 3, nil, nil},
+				{104, 1, nil, nil},
+				{111, 3, nil, nil},
+				{112, 1, nil, nil},
+				{114, 1, nil, nil},
+				{115, 1, nil, nil},
+			},
+		},
+	}
+	for _, ex := range examples {
+		t.Run(ex.name, func(t *testing.T) {
 
-					}
-					if forest[i] != ex.want[i] {
-						log.Fatalf("got %v, want %v for entry %v\n", got[i], ex.want[i], i)
-					}
-				}
-			*/
 		})
 	}
 }
