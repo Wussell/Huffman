@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"sort"
 )
 
@@ -109,8 +111,85 @@ func merge(maps ...map[rune]string) map[rune]string {
 	return result
 }
 
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+func makeTable(content string) map[rune]string {
+	m := countChars(content)
+	forest := makeForest(m)
+	t := makeTree(forest)
+	var path string
+	table := paths(&t, path)
+	return table
+}
+
+func stringToBits(s string, m map[rune]string) []byte {
+	b := make([]byte, 1)
+	eof := "1111"
+	var offset, i int
+	for _, runeValue := range s {
+		bitSequence := m[runeValue]
+		for _, bit := range bitSequence {
+			if offset == 8 {
+				offset = 0
+				var elem byte
+				b = append(b, elem)
+				i++
+			}
+			if bit == '0' {
+				b[i] <<= 1
+				offset++
+			} else {
+				b[i] <<= 1
+				b[i] |= 1
+				offset++
+			}
+		}
+	}
+	for _, bit := range eof {
+		if offset == 8 {
+			offset = 0
+			i++
+			var elem byte
+			b = append(b, elem)
+		}
+		if bit == '0' {
+			b[i] <<= 1
+			offset++
+		} else if bit == '1' {
+			b[i] <<= 1
+			b[i] |= 1
+			offset++
+		}
+	}
+	b[i] <<= (8 - offset)
+	return b
+}
+
+func compress(fileName string) {
+	f, err := os.Open(fileName)
+	check(err)
+	defer f.Close()
+	b, err := ioutil.ReadFile(fileName)
+	check(err)
+	data := string(b)
+	table := makeTable(data)
+	compressedData := stringToBits(data, table)
+	compressedFileName := fmt.Sprintf("%s.huff", fileName)
+	cF, err := os.Create(compressedFileName)
+	check(err)
+	defer cF.Close()
+	n, err := cf.Write(compressedData)
+	fmt.Printf("%v bytes written", n)
+	check(err)
+}
+
 func main() {
-	content := "streets are stone stars are not"
+	/*content := "streets are stone stars are not"
+
 	charCount := countChars(content)
 	//fmt.Println(charCount)
 	forest := makeForest(charCount)
@@ -121,4 +200,6 @@ func main() {
 	for c, p := range table {
 		fmt.Printf("%c: %s \n", c, p)
 	}
+	*/
+	compress("testFile")
 }
