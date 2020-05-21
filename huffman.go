@@ -182,7 +182,7 @@ func compress(fileName string) {
 	cF, err := os.Create(compressedFileName)
 	check(err)
 	defer cF.Close()
-	n, err := cf.Write(compressedData)
+	n, err := cF.Write(compressedData)
 	fmt.Printf("%v bytes written", n)
 	check(err)
 }
