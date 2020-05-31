@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"strings"
 )
 
 type tree struct {
@@ -56,6 +57,8 @@ func makeTree(forest []tree) *tree {
 		forest[1] = newTree
 		forest = forest[1:]
 	}
+	var i int
+	idTree(newTree, i)
 	return newTree
 }
 
@@ -156,6 +159,7 @@ func check(err error) {
 	}
 }
 
+/*
 func makeTable(content string) map[rune]string {
 	m := countChars(content)
 	forest := makeForest(m)
@@ -164,6 +168,7 @@ func makeTable(content string) map[rune]string {
 	table := paths(&t, path)
 	return table
 }
+*/
 
 func stringToBits(s string, m map[rune]string) []byte {
 	b := make([]byte, 1)
@@ -243,9 +248,11 @@ func compress(fileName string) {
 	t := makeTree(forest)
 	var treeString string
 	treeString := treeToString(t, treeString)
-	compressedTree := treeStringToBits(treeString)
+	treeEnd := make([]byte, 4)
+	compressedTree := append(treeStringToBits(treeString), treeEnd...)
 	var path string
 	table := paths(&t, path)
+	fileName = strings.TrimSuffix(fileName, ".unhuff")
 	compressedFileName := fmt.Sprintf("%s.huff", fileName)
 	cF, err := os.Create(compressedFileName)
 	check(err)
@@ -271,8 +278,6 @@ func bitsToTree(b []byte) []*tree {
 		treeFields = append(treeFields, ti)
 		m[t.id] = &t
 	}
-	fmt.Printf("%v\n", m)
-	fmt.Printf("%v\n", treeFields)
 	newTree := make([]*tree, 0)
 	for i := 0; i < len(treeFields); i++ {
 		t := m[treeFields[i].id]
@@ -285,6 +290,84 @@ func bitsToTree(b []byte) []*tree {
 		newTree = append(newTree, t)
 	}
 	return newTree
+}
+
+func findRoot(newTree []*tree) *tree {
+	root := newTree[0]
+	for _, t := range newTree {
+		if t.l == root || t.r == root {
+			root = t
+		}
+	}
+	return root
+}
+
+func unhuff(data []byte, root *tree) string{
+	var s string
+	const comp byte = 128
+	for _, b := range data {
+		for i := 0; i < 8; i++ {
+			if b & comp == 128 {
+				s += "1"
+			} else {
+				s += "0"
+			}
+			b <<= 1
+		} 
+	}
+	var unhuffedData string
+	trueRoot := root
+	for _, bit := range s {
+		if root.l != nil || root.r != nil {
+			if bit = '0' {
+				root = root.l
+			} else {
+				root = root.r
+			}
+		} else if root.c == 'ൾ' {
+			break
+		} else{
+			unhuffedData += string(root.c)
+			root = trueRoot
+		}
+	}
+	return unhuffedData
+}
+
+func decompress(fileName string) {
+	if strings.HasSuffix(fileName, ".huff") == true {
+	f, err := os.Open(fileName)
+	check(err)
+	defer f.Close()
+	b, err := ioutil.ReadFile(fileName)
+	check(err)
+	var zeroByteCount int
+	var treeEnd int
+	for i, elem := range b {
+		if elem == 0 {
+			zeroByteCount++
+		} else {
+			zeroByteCount = 0
+		}
+		if zeroByteCount == 4 {
+			treeEnd = i
+		}
+	}
+	treeData := b[:treeEnd-1]
+	newTree := bitsToTree(treeData)
+	root := findRoot(newTree)
+	data := b[treeEnd:]
+	unhuffedData := unhuff(data, root)
+	uncompressedFileName := strings.Replace(fileName, ".huff", ".unhuff", -1)
+	uCF, err := os.Create(uncompressedFileName)
+	check(err)
+	defer uCF.Close()
+	n, err := uCF.WriteString(unhuffedData)
+	fmt.Printf("%v bytes written", n)
+	check(err)
+	} else {
+		fmt.Printf("File is not in the correct format (.huff)\n")
+	}
 }
 
 func main() {
@@ -301,8 +384,16 @@ func main() {
 		fmt.Printf("%c: %s \n", c, p)
 	}
 	*/
+	
 	fmt.Println("Enter the name of the file to compress:")
 	var fileName string
 	fmt.Scanln(&fileName)
 	compress(fileName)
+	
+	/*
+	fmt.Println("Enter the name of the file to decompress:")
+	var fileName string
+	fmt.Scanln(&fileName)
+	decompress(fileName)
+	*/
 }
