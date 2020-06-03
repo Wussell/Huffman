@@ -104,33 +104,34 @@ type treeInfo struct {
 
 func makeTree(content string) *tree {
 	//countChars
-	count := make(map[rune]int)
+	counts := make(map[rune]int)
 	for _, v := range content {
-		count[v]++
+		counts[v]++
 	}
 	//makeForest
 	var numChars int
-	for range count {
+	for range counts {
 		numChars++
 	}
 	forest := make([]tree, numChars)
 	//fmt.Printf("%v\n", forest)
 	i := 0
-	for c, w := range count {
+	for c, w := range counts {
 		forest[i].c = c
 		forest[i].w = w
+		forest[i].id = i + 1
 		i++
 	}
 	//makeTree
+	length := len(forest)
 	var newTree tree
-	for len(forest) > 1 {
+	for i := 0; len(forest) > 1; i++ {
 		sort.Slice(forest, func(i, j int) bool { return forest[i].w < forest[j].w })
 		newTree = combineTrees(forest[0], forest[1])
+		newTree.id = length + i + 1
 		forest[1] = newTree
 		forest = forest[1:]
 	}
-	var j int
-	idTree(&newTree, j)
 	return &newTree
 }
 
@@ -142,6 +143,7 @@ func combineTrees(t1 tree, t2 tree) tree {
 	return t3
 }
 
+/*
 func idTree(t *tree, i int) {
 	i++
 	if t.l != nil {
@@ -152,7 +154,7 @@ func idTree(t *tree, i int) {
 		idTree(t.r, i)
 	}
 }
-
+*/
 func compressTree(root *tree, s string) string {
 	if root.l != nil {
 		s = compressTree(root.l, s)
