@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"testing"
 )
 
+/*
 func TestCharCount(t *testing.T) {
 	examples := []struct {
 		name string
@@ -110,7 +110,7 @@ func TestMakeTree(t *testing.T) {
 		forest []tree
 	}{
 		{
-			name: "go go gophers",
+			name: "streets are stone stars are not",
 			forest: []tree{
 				{32, 2, nil, nil},
 				{101, 1, nil, nil},
@@ -126,6 +126,43 @@ func TestMakeTree(t *testing.T) {
 	for _, ex := range examples {
 		t.Run(ex.name, func(t *testing.T) {
 
+		})
+	}
+}
+*/
+
+func TestCompressTree(t *testing.T) {
+	examples := []struct {
+		name string
+		root *tree
+	}{
+		{
+			name: "streets are stone stars are not",
+			root: makeTree("streets are stone stars are not"),
+		},
+	}
+	for _, ex := range examples {
+		t.Run(ex.name, func(t *testing.T) {
+			var s string
+			nodes := traverse(ex.root)
+			serialTree := compressTree(ex.root, s)
+			compressedTree := compressedTreeToBits(serialTree)
+			treeEnd := findTreeEnd(compressedTree)
+			uncompressedNodes := uncompressTree(compressedTree[:treeEnd])
+			mNodes := make(map[int]tree)
+			for _, n := range nodes {
+				mNodes[n.id] = n
+			}
+			for _, uN := range uncompressedNodes {
+				wantNode, ok := mNodes[uN.id]
+				if ok == false {
+					log.Fatalf("There is no node with id %v\n", uN.id)
+				}
+				gotNode := *uN
+				if gotNode.c != wantNode.c {
+					log.Fatalf("Mismatched characters. got %v, want %v", gotNode.c, wantNode.c)
+				}
+			}
 		})
 	}
 }
