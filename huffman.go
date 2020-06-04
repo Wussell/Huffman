@@ -273,17 +273,18 @@ func compress(fileName string) {
 	b, err := ioutil.ReadFile(fileName)
 	check(err)
 	data := string(b) + "Þ" // + "ൾ"
+	//fmt.Printf("data read from file before compression: %s\n", data[len(data)-50:])
 	t := makeTree(data)
 	var serialTree string
 	serialTree = compressTree(t, serialTree)
 	compressedTree := compressedTreeToBits(serialTree)
-	var path string
-	table := paths(t, path)
 	fileName = strings.TrimSuffix(fileName, ".unhuff")
 	compressedFileName := fmt.Sprintf("%s.huff", fileName)
 	cF, err := os.Create(compressedFileName)
 	check(err)
 	defer cF.Close()
+	var path string
+	table := paths(t, path)
 	compressedData := append(compressedTree, stringToBits(data, table)...)
 	n, err := cF.Write(compressedData)
 	fmt.Printf("%v bytes written", n)
@@ -330,32 +331,24 @@ func findRoot(newTree []*tree) *tree {
 }
 
 func unhuff(data []byte, root *tree) string {
-	var s string
-	const comp byte = 128
-	for _, b := range data {
-		for i := 0; i < 8; i++ {
-			if b&comp == 128 {
-				s += "1"
-			} else {
-				s += "0"
-			}
-			b <<= 1
-		}
-	}
 	var unhuffedData string
 	trueRoot := root
-	for _, bit := range s {
-		if root.l != nil || root.r != nil { //conditional not true only when root.l and root.r are both nil
-			if bit == '0' {
-				root = root.l
+	for _, b := range data {
+		for i := 0; i < 8; i++ {
+			comp := byte(128)
+			if root.l != nil || root.r != nil {
+				if b&comp == comp {
+					root = root.r
+				} else {
+					root = root.l
+				}
+				comp >>= 1
+			} else if root.c == 'Þ' {
+				break
 			} else {
-				root = root.r
+				unhuffedData += string(root.c)
+				root = trueRoot
 			}
-		} else if root.c == 'Þ' { //'ൾ'
-			break
-		} else {
-			unhuffedData += string(root.c)
-			root = trueRoot
 		}
 	}
 	return unhuffedData
