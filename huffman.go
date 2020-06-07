@@ -105,22 +105,26 @@ type treeInfo struct {
 func makeTree(content string) *tree {
 	//countChars
 	counts := make(map[rune]int)
-	for _, v := range content {
-		counts[v]++
+	forest := make([]tree, len(content))
+	var j int
+	for _, c := range content {
+		counts[c]++
+		var charInForest bool
+		for _, t := range forest {
+			if c == t.c {
+				charInForest = true
+				break
+			}
+		}
+		if charInForest == false {
+			forest[j].c = c
+			j++
+		}
 	}
-	//makeForest
-	var numChars int
-	for range counts {
-		numChars++
-	}
-	forest := make([]tree, numChars)
-	//fmt.Printf("%v\n", forest)
-	i := 0
-	for c, w := range counts {
-		forest[i].c = c
-		forest[i].w = w
+	forest = forest[:len(counts)]
+	for i := 0; i < len(forest); i++ {
+		forest[i].w = counts[forest[i].c]
 		forest[i].id = i + 1
-		i++
 	}
 	//makeTree
 	length := len(forest)
