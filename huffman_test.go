@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"testing"
 )
 
@@ -143,6 +142,7 @@ func TestCompressTree(t *testing.T) {
 			name: "go go gophers",
 			root: makeTree("go go gophers"),
 		},
+
 		{
 			name: "the quick brown fox jumped over the lazy dog",
 			root: makeTree("the quick brown fox jumped over the lazy dog"),
@@ -159,6 +159,7 @@ func TestCompressTree(t *testing.T) {
 			name: "peter piper picked a peck of pickled peppers",
 			root: makeTree("peter piper picked a peck of pickled peppers"),
 		},
+
 		{
 			name: "abÞ",
 			root: makeTree("abÞ"),
@@ -231,6 +232,7 @@ func TestCompress(t *testing.T) {
 			name: "go go gophers" + "Þ",
 			root: makeTree("go go gophers" + "Þ"),
 		},
+
 		{
 			name: "the quick brown fox jumped over the lazy dog" + "Þ",
 			root: makeTree("the quick brown fox jumped over the lazy dog" + "Þ"),
@@ -247,6 +249,7 @@ func TestCompress(t *testing.T) {
 			name: "peter piper picked a peck of pickled peppers" + "Þ",
 			root: makeTree("peter piper picked a peck of pickled peppers" + "Þ"),
 		},
+
 		{
 			name: "abÞ",
 			root: makeTree("abÞ"),
@@ -261,14 +264,14 @@ func TestCompress(t *testing.T) {
 			treeEnd := findTreeEnd(compressedData)
 			uNodes := uncompressTree(compressedData[:treeEnd])
 			root := findRoot(uNodes)
-			log.Printf("compressed tree: %x", compressedTree)
-			for _, uNode := range uNodes {
-				log.Printf("uncompressed tree nodes: %+v", uNode)
-			}
-			log.Printf("compressed bits: %x", compressedBits)
-			log.Printf("compressed tree end: %d", treeEnd)
-			log.Printf("compressed root id: %d", root.id)
-
+			//	log.Printf("compressed tree: %x", compressedTree)
+			//	for _, uNode := range uNodes {
+			//		log.Printf("uncompressed tree nodes: %+v", uNode)
+			//	}
+			/*	log.Printf("compressed bits: %x", compressedBits)
+				log.Printf("compressed tree end: %d", treeEnd)
+				log.Printf("compressed root id: %d", root.id)
+			*/
 			reslicedData := compressedData[treeEnd+8:]
 			for i, b := range reslicedData {
 				if b != compressedBits[i] {

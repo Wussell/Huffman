@@ -229,15 +229,14 @@ func check(err error) {
 func stringToBits(s string, m map[rune]string) []byte {
 	b := make([]byte, 1)
 	//eof := m['ൾ']
-	eof := m['Þ']
 	var offset, i int
 	for _, runeValue := range s {
 		bitSequence := m[runeValue]
 		for _, bit := range bitSequence {
 			if offset == 8 {
 				offset = 0
-				var elem byte
-				b = append(b, elem)
+				var new byte
+				b = append(b, new)
 				i++
 			}
 			if bit == '0' {
@@ -249,23 +248,24 @@ func stringToBits(s string, m map[rune]string) []byte {
 				offset++
 			}
 		}
-	}
-	for _, bit := range eof {
-		if offset == 8 {
-			offset = 0
-			i++
-			var elem byte
-			b = append(b, elem)
+	} /*
+		for _, bit := range m['Þ'] {
+			if offset == 8 {
+				offset = 0
+				i++
+				var elem byte
+				b = append(b, elem)
+			}
+			if bit == '0' {
+				b[i] <<= 1
+				offset++
+			} else {
+				b[i] <<= 1
+				b[i] |= 1
+				offset++
+			}
 		}
-		if bit == '0' {
-			b[i] <<= 1
-			offset++
-		} else {
-			b[i] <<= 1
-			b[i] |= 1
-			offset++
-		}
-	}
+	*/
 	b[i] <<= (8 - offset)
 	return b
 }
@@ -338,14 +338,16 @@ func unhuff(data []byte, root *tree) string {
 	var unhuffedData string
 	trueRoot := root
 	for _, b := range data {
-		for i := 0; i < 8; i++ {
-			comp := byte(128)
+		comp := byte(128)
+		i := 0
+		for i < 8 {
 			if root.l != nil || root.r != nil {
 				if b&comp == comp {
 					root = root.r
 				} else {
 					root = root.l
 				}
+				i++
 				comp >>= 1
 			} else if root.c == 'Þ' {
 				break
@@ -467,5 +469,4 @@ func main() {
 	//fmt.Scanln(&fileName)
 	compress("testFile2")
 	decompress("testFile2.huff")
-
 }
