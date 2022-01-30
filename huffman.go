@@ -1,82 +1,3 @@
-/*
-func countChars(content string) map[rune]int {
-	count := make(map[rune]int)
-	for _, v := range content {
-		count[v]++
-	}
-	return count
-}
-
-func makeForest(charCount map[rune]int) []*tree {
-	var numChars int
-	for range charCount {
-		numChars++
-	}
-	forest := make([]*tree, numChars)
-	i := 0
-	for c, v := range charCount {
-		forest[i].c = c
-		forest[i].w = v
-		i++
-	}
-	return forest
-}
-
-func makeTree(forest []*tree) *tree {
-	var newTree *tree
-	for len(forest) > 1 {
-		sort.Slice(forest, func(i, j int) bool { return forest[i].w < forest[j].w })
-		newTree = combineTrees(forest[0], forest[1])
-		forest[1] = newTree
-		forest = forest[1:]
-	}
-	var i int
-	idTree(newTree, i)
-	return newTree
-}
-
-func storeLeaves(root *tree) []rune {
-	s := make([]rune, 0)
-	if root != nil {
-		if root.l != nil {
-			s = append(s, storeLeaves(root.l)...)
-		}
-		if root.l == nil && root.r == nil {
-			s = append(s, root.c)
-		}
-		if root.r != nil {
-			s = append(s, storeLeaves(root.r)...)
-		}
-	}
-	return s
-}
-
-//traverse tree and store each value in order in some data structure
-func traverse(root *tree) []rune {
-	//Left, Node, Right
-	s := make([]rune, 0)
-	if root != nil {
-		if root.l != nil {
-			s = append(s, traverse(root.l)...)
-		}
-		s = append(s, root.c)
-		if root.r != nil {
-			s = append(s, traverse(root.r)...)
-		}
-	}
-	return s
-}
-
-func makeTable(content string) map[rune]string {
-	m := countChars(content)
-	forest := makeForest(m)
-	t := makeTree(forest)
-	var path string
-	table := paths(&t, path)
-	return table
-}
-*/
-
 package main
 
 import (
@@ -175,7 +96,6 @@ func compressTree(root *tree, s string) string {
 }
 
 func compressedTreeToBits(s string) []byte {
-	//fmt.Printf("%s\n", s)
 	b := make([]byte, 1)
 	var offset, i int
 	for _, bit := range s {
@@ -248,24 +168,8 @@ func stringToBits(s string, m map[rune]string) []byte {
 				offset++
 			}
 		}
-	} /*
-		for _, bit := range m['Þ'] {
-			if offset == 8 {
-				offset = 0
-				i++
-				var elem byte
-				b = append(b, elem)
-			}
-			if bit == '0' {
-				b[i] <<= 1
-				offset++
-			} else {
-				b[i] <<= 1
-				b[i] |= 1
-				offset++
-			}
-		}
-	*/
+	}
+
 	b[i] <<= (8 - offset)
 	return b
 }
@@ -276,8 +180,7 @@ func compress(fileName string) {
 	defer f.Close()
 	b, err := ioutil.ReadFile(fileName)
 	check(err)
-	data := string(b) + "Þ" // + "ൾ"
-	//fmt.Printf("data read from file before compression: %s\n", data[len(data)-50:])
+	data := string(b) + "Þ"
 	t := makeTree(data)
 	var serialTree string
 	serialTree = compressTree(t, serialTree)
@@ -391,7 +294,7 @@ func findTreeEnd(b []byte) int {
 		} else {
 			oneSequenceDone = false
 		}
-		if oneSequenceDone == true {
+		if oneSequenceDone {
 			if elem == 0 {
 				zeroByteCount++
 			} else {
@@ -406,7 +309,7 @@ func findTreeEnd(b []byte) int {
 }
 
 func decompress(fileName string) {
-	if strings.HasSuffix(fileName, ".huff") == true {
+	if strings.HasSuffix(fileName, ".huff") {
 		f, err := os.Open(fileName)
 		check(err)
 		defer f.Close()
@@ -418,17 +321,10 @@ func decompress(fileName string) {
 		length := len(treeData)
 		fmt.Printf("length of treeData: %v\n", length)
 		fmt.Printf("sample of tree data: %v\n", treeData[length-5:])
-		//fmt.Printf("% 08b\n", treeData[len(treeData)-10:])
 		newTree := uncompressTree(treeData)
 		fmt.Printf("nodes in tree: %v\n", len(newTree))
-		//treeSample := newTree[:10]
-		//fmt.Printf("%+v\n", treeSample)
 		root := findRoot(newTree)
 		fmt.Printf("%p: %+v\n", root, root)
-		//chars := traverse(root)
-		//fmt.Printf("%c\n", chars[:10])
-		//chars := traverse(root)
-		//fmt.Printf("% c\n", chars[:20])
 		data := b[treeEnd+8:]
 		unhuffedData := unhuff(data, root)
 		uncompressedFileName := strings.Replace(fileName, ".huff", ".unhuff", -1)
@@ -444,29 +340,6 @@ func decompress(fileName string) {
 }
 
 func main() {
-	/*content := "streets are stone stars are not"
-
-	charCount := countChars(content)
-	//fmt.Println(charCount)
-	forest := makeForest(charCount)
-	//fmt.Println(forest)
-	t := makeTree(forest)
-	var path string
-	table := paths(&t, path)
-	for c, p := range table {
-		fmt.Printf("%c: %s \n", c, p)
-	}
-	*/
-	/*
-		fmt.Println("Enter the name of the file to compress:")
-		var fileName string
-		fmt.Scanln(&fileName)
-		compress(fileName)
-	*/
-
-	//fmt.Println("Enter the name of the file to decompress:")
-	//var fileName string
-	//fmt.Scanln(&fileName)
 	compress("testFile2")
 	decompress("testFile2.huff")
 }
