@@ -37,7 +37,7 @@ func makeTree(content string) *tree {
 				break
 			}
 		}
-		if charInForest == false {
+		if !charInForest {
 			forest[j].c = c
 			j++
 		}
@@ -174,28 +174,16 @@ func stringToBits(s string, m map[rune]string) []byte {
 	return b
 }
 
-func compress(fileName string) {
-	f, err := os.Open(fileName)
-	check(err)
-	defer f.Close()
-	b, err := ioutil.ReadFile(fileName)
-	check(err)
-	data := string(b) + "Þ"
-	t := makeTree(data)
+func compress(data []byte) []byte {
+	compData := string(data) + "Þ"
+	t := makeTree(compData)
 	var serialTree string
 	serialTree = compressTree(t, serialTree)
 	compressedTree := compressedTreeToBits(serialTree)
-	fileName = strings.TrimSuffix(fileName, ".unhuff")
-	compressedFileName := fmt.Sprintf("%s.huff", fileName)
-	cF, err := os.Create(compressedFileName)
-	check(err)
-	defer cF.Close()
 	var path string
 	table := paths(t, path)
-	compressedData := append(compressedTree, stringToBits(data, table)...)
-	n, err := cF.Write(compressedData)
-	fmt.Printf("%v bytes written", n)
-	check(err)
+	compressedData := append(compressedTree, stringToBits(compData, table)...)
+	return compressedData
 }
 
 func uncompressTree(b []byte) []*tree {
@@ -308,7 +296,52 @@ func findTreeEnd(b []byte) int {
 	return treeEnd
 }
 
-func decompress(fileName string) {
+func decompress(data []byte) string {
+	treeEnd := findTreeEnd(data)
+	fmt.Printf("tree end index: %v\n", treeEnd)
+	treeData := data[:treeEnd]
+	length := len(treeData)
+	fmt.Printf("length of treeData: %v\n", length)
+	fmt.Printf("sample of tree data: %v\n", treeData[length-5:])
+	newTree := uncompressTree(treeData)
+	fmt.Printf("nodes in tree: %v\n", len(newTree))
+	root := findRoot(newTree)
+	fmt.Printf("%p: %+v\n", root, root)
+	content := data[treeEnd+8:]
+	unhuffedData := unhuff(content, root)
+	return unhuffedData
+}
+
+func main() {
+	compressFile("testFile2")
+	decompressFile("testFile2.huff")
+}
+
+func compressFile(fileName string) {
+	f, err := os.Open(fileName)
+	check(err)
+	defer f.Close()
+	data, err := ioutil.ReadFile(fileName)
+	check(err)
+	compData := string(data) + "Þ"
+	t := makeTree(compData)
+	var serialTree string
+	serialTree = compressTree(t, serialTree)
+	compressedTree := compressedTreeToBits(serialTree)
+	var path string
+	table := paths(t, path)
+	compressedData := append(compressedTree, stringToBits(compData, table)...)
+	fileName = strings.TrimSuffix(fileName, ".unhuff")
+	compressedFileName := fmt.Sprintf("%s.huff", fileName)
+	cF, err := os.Create(compressedFileName)
+	check(err)
+	defer cF.Close()
+	n, err := cF.Write(compressedData)
+	fmt.Printf("%v bytes written\n", n)
+	check(err)
+}
+
+func decompressFile(fileName string) {
 	if strings.HasSuffix(fileName, ".huff") {
 		f, err := os.Open(fileName)
 		check(err)
@@ -337,9 +370,4 @@ func decompress(fileName string) {
 	} else {
 		fmt.Printf("File is not in the correct format (.huff)\n")
 	}
-}
-
-func main() {
-	compress("testFile2")
-	decompress("testFile2.huff")
 }
