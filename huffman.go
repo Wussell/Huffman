@@ -23,43 +23,6 @@ type treeInfo struct {
 	r  int
 }
 
-func makeTree(content string) *tree {
-	//countChars
-	counts := make(map[rune]int)
-	forest := make([]tree, len(content))
-	var j int
-	for _, c := range content {
-		counts[c]++
-		var charInForest bool
-		for _, t := range forest {
-			if c == t.c {
-				charInForest = true
-				break
-			}
-		}
-		if !charInForest {
-			forest[j].c = c
-			j++
-		}
-	}
-	forest = forest[:len(counts)]
-	for i := 0; i < len(forest); i++ {
-		forest[i].w = counts[forest[i].c]
-		forest[i].id = i + 1
-	}
-	//makeTree
-	length := len(forest)
-	var newTree tree
-	for i := 0; len(forest) > 1; i++ {
-		sort.Slice(forest, func(i, j int) bool { return forest[i].w < forest[j].w })
-		newTree = combineTrees(forest[0], forest[1])
-		newTree.id = length + i + 1
-		forest[1] = newTree
-		forest = forest[1:]
-	}
-	return &newTree
-}
-
 func combineTrees(t1 tree, t2 tree) tree {
 	var t3 tree //= &tree{}
 	t3.w = t1.w + t2.w
@@ -175,14 +138,48 @@ func stringToBits(s string, m map[rune]string) []byte {
 }
 
 func compress(data []byte) []byte {
-	compData := string(data) + "Þ"
-	t := makeTree(compData)
+	fullData := string(data) + "Þ"
+
+	//countChars
+	counts := make(map[rune]int)
+	forest := make([]tree, len(fullData))
+	var j int
+	for _, c := range fullData {
+		counts[c]++
+		var charInForest bool
+		for _, t := range forest {
+			if c == t.c {
+				charInForest = true
+				break
+			}
+		}
+		if !charInForest {
+			forest[j].c = c
+			j++
+		}
+	}
+	forest = forest[:len(counts)]
+	for i := 0; i < len(forest); i++ {
+		forest[i].w = counts[forest[i].c]
+		forest[i].id = i + 1
+	}
+	//makeTree
+	length := len(forest)
+	var tree tree
+	for i := 0; len(forest) > 1; i++ {
+		sort.Slice(forest, func(i, j int) bool { return forest[i].w < forest[j].w })
+		tree = combineTrees(forest[0], forest[1])
+		tree.id = length + i + 1
+		forest[1] = tree
+		forest = forest[1:]
+	}
+
 	var serialTree string
-	serialTree = compressTree(t, serialTree)
+	serialTree = compressTree(&tree, serialTree)
 	compressedTree := compressedTreeToBits(serialTree)
 	var path string
-	table := paths(t, path)
-	compressedData := append(compressedTree, stringToBits(compData, table)...)
+	table := paths(&tree, path)
+	compressedData := append(compressedTree, stringToBits(fullData, table)...)
 	return compressedData
 }
 
