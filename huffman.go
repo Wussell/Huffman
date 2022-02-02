@@ -295,15 +295,9 @@ func findTreeEnd(b []byte) int {
 
 func decompress(data []byte) string {
 	treeEnd := findTreeEnd(data)
-	fmt.Printf("tree end index: %v\n", treeEnd)
 	treeData := data[:treeEnd]
-	length := len(treeData)
-	fmt.Printf("length of treeData: %v\n", length)
-	fmt.Printf("sample of tree data: %v\n", treeData[length-5:])
 	newTree := uncompressTree(treeData)
-	fmt.Printf("nodes in tree: %v\n", len(newTree))
 	root := findRoot(newTree)
-	fmt.Printf("%p: %+v\n", root, root)
 	content := data[treeEnd+8:]
 	unhuffedData := unhuff(content, root)
 	return unhuffedData
@@ -320,14 +314,9 @@ func compressFile(fileName string) {
 	defer f.Close()
 	data, err := ioutil.ReadFile(fileName)
 	check(err)
-	compData := string(data) + "Þ"
-	t := makeTree(compData)
-	var serialTree string
-	serialTree = compressTree(t, serialTree)
-	compressedTree := compressedTreeToBits(serialTree)
-	var path string
-	table := paths(t, path)
-	compressedData := append(compressedTree, stringToBits(compData, table)...)
+
+	compressedData := compress(data)
+
 	fileName = strings.TrimSuffix(fileName, ".unhuff")
 	compressedFileName := fmt.Sprintf("%s.huff", fileName)
 	cF, err := os.Create(compressedFileName)
@@ -345,18 +334,9 @@ func decompressFile(fileName string) {
 		defer f.Close()
 		b, err := ioutil.ReadFile(fileName)
 		check(err)
-		treeEnd := findTreeEnd(b)
-		fmt.Printf("tree end index: %v\n", treeEnd)
-		treeData := b[:treeEnd]
-		length := len(treeData)
-		fmt.Printf("length of treeData: %v\n", length)
-		fmt.Printf("sample of tree data: %v\n", treeData[length-5:])
-		newTree := uncompressTree(treeData)
-		fmt.Printf("nodes in tree: %v\n", len(newTree))
-		root := findRoot(newTree)
-		fmt.Printf("%p: %+v\n", root, root)
-		data := b[treeEnd+8:]
-		unhuffedData := unhuff(data, root)
+
+		unhuffedData := decompress(b)
+
 		uncompressedFileName := strings.Replace(fileName, ".huff", ".unhuff", -1)
 		uCF, err := os.Create(uncompressedFileName)
 		check(err)
