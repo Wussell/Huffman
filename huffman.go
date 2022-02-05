@@ -24,7 +24,7 @@ type treeInfo struct {
 }
 
 func combineTrees(t1 tree, t2 tree) tree {
-	var t3 tree //= &tree{}
+	var t3 tree
 	t3.w = t1.w + t2.w
 	t3.l = &t1
 	t3.r = &t2
@@ -82,11 +82,12 @@ func compressedTreeToBits(s string) []byte {
 	return b
 }
 
-func paths(t *tree, path string) map[rune]string {
+// make a map of each character's path through the tree
+func runePaths(t *tree, path string) map[rune]string {
 	if t == nil {
 		return nil
 	}
-	result := merge(paths(t.l, path+"0"), paths(t.r, path+"1"))
+	result := merge(runePaths(t.l, path+"0"), runePaths(t.r, path+"1"))
 	if t.c != 0 {
 		result[t.c] = path
 	}
@@ -109,6 +110,7 @@ func check(err error) {
 	}
 }
 
+//use the map to turn the data being compressed into 1's and 0's representing
 func stringToBits(s string, m map[rune]string) []byte {
 	b := make([]byte, 1)
 	//eof := m['ൾ']
@@ -178,7 +180,7 @@ func compress(data []byte) []byte {
 	serialTree = compressTree(&tree, serialTree)
 	compressedTree := compressedTreeToBits(serialTree)
 	var path string
-	table := paths(&tree, path)
+	table := runePaths(&tree, path)
 	compressedData := append(compressedTree, stringToBits(fullData, table)...)
 	return compressedData
 }
@@ -226,7 +228,7 @@ func unhuff(data []byte, root *tree) string {
 	var unhuffedData string
 	trueRoot := root
 	for _, b := range data {
-		comp := byte(128)
+		comp := byte(128) //10000000
 		i := 0
 		for i < 8 {
 			if root.l != nil || root.r != nil {
