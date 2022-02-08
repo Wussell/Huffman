@@ -31,54 +31,24 @@ func combineTrees(t1 tree, t2 tree) tree {
 	return t3
 }
 
-func compressTree(root *tree, s string) string {
+func compressTreeBytes(root *tree, b []byte) []byte {
 	if root.l != nil {
-		s = compressTree(root.l, s)
+		b = compressTreeBytes(root.l, b)
 	}
-	id := fmt.Sprintf("%08b", root.id)
-	char := fmt.Sprintf("%08b", root.c)
-	s = s + id + char
+	b = append(b, byte(root.id), byte(root.c))
 	if root.l != nil {
-		left := fmt.Sprintf("%08b", root.l.id)
-		s += left
+		b = append(b, byte(root.l.id))
 	} else {
-		left := fmt.Sprintf("%08b", 0)
-		s += left
+		b = append(b, byte(0))
 	}
 	if root.r != nil {
-		right := fmt.Sprintf("%08b", root.r.id)
-		s += right
+		b = append(b, byte(root.r.id))
 	} else {
-		right := fmt.Sprintf("%08b", 0)
-		s += right
+		b = append(b, byte(0))
 	}
 	if root.r != nil {
-		s = compressTree(root.r, s)
+		b = compressTreeBytes(root.r, b)
 	}
-	return s
-}
-
-func compressedTreeToBits(s string) []byte {
-	b := make([]byte, 1)
-	var offset, i int
-	for _, bit := range s {
-		if offset == 8 {
-			offset = 0
-			var new byte
-			b = append(b, new)
-			i++
-		}
-		if bit == '0' {
-			b[i] <<= 1
-			offset++
-		} else if bit == '1' {
-			b[i] <<= 1
-			b[i] |= 1
-			offset++
-		}
-	}
-	treeEnd := []byte{1, 1, 1, 1, 0, 0, 0, 0}
-	b = append(b, treeEnd...)
 	return b
 }
 
@@ -140,6 +110,7 @@ func stringToBits(s string, m map[rune]string) []byte {
 }
 
 func compress(data []byte) []byte {
+	fmt.Println("COMPRESSING...")
 	fullData := string(data) + "Þ"
 
 	//countChars
@@ -169,16 +140,16 @@ func compress(data []byte) []byte {
 	length := len(forest)
 	var tree tree
 	for i := 0; len(forest) > 1; i++ {
-		sort.Slice(forest, func(i, j int) bool { return forest[i].w < forest[j].w })
+		sort.Slice(forest, func(k, l int) bool { return forest[k].w < forest[l].w })
 		tree = combineTrees(forest[0], forest[1])
 		tree.id = length + i + 1
 		forest[1] = tree
 		forest = forest[1:]
 	}
-
-	var serialTree string
-	serialTree = compressTree(&tree, serialTree)
-	compressedTree := compressedTreeToBits(serialTree)
+	compressedTree := make([]byte, 0, len(counts)*4)
+	compressedTree = compressTreeBytes(&tree, compressedTree)
+	treeEnd := []byte{1, 1, 1, 1, 0, 0, 0, 0}
+	compressedTree = append(compressedTree, treeEnd...) //for decompression to know where end of tree is
 	var path string
 	table := runePaths(&tree, path)
 	compressedData := append(compressedTree, stringToBits(fullData, table)...)
@@ -250,21 +221,6 @@ func unhuff(data []byte, root *tree) string {
 	return unhuffedData
 }
 
-func traverse(root *tree) []tree {
-	//Left, Node, Right
-	s := make([]tree, 0)
-	if root != nil {
-		if root.l != nil {
-			s = append(s, traverse(root.l)...)
-		}
-		s = append(s, *root)
-		if root.r != nil {
-			s = append(s, traverse(root.r)...)
-		}
-	}
-	return s
-}
-
 func findTreeEnd(b []byte) int {
 	var oneByteCount int
 	var oneSequenceDone bool
@@ -296,6 +252,7 @@ func findTreeEnd(b []byte) int {
 }
 
 func decompress(data []byte) string {
+	fmt.Println("DECOMPRESSING...")
 	treeEnd := findTreeEnd(data)
 	treeData := data[:treeEnd]
 	newTree := uncompressTree(treeData)
