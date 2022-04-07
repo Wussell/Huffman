@@ -110,7 +110,6 @@ func stringToBits(s string, m map[rune]string) []byte {
 }
 
 func compress(data []byte) []byte {
-	fmt.Println("COMPRESSING...")
 	fullData := string(data) + "Þ"
 
 	//countChars
@@ -252,7 +251,6 @@ func findTreeEnd(b []byte) int {
 }
 
 func decompress(data []byte) string {
-	fmt.Println("DECOMPRESSING...")
 	treeEnd := findTreeEnd(data)
 	treeData := data[:treeEnd]
 	newTree := uncompressTree(treeData)
